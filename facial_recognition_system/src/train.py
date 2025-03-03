@@ -12,7 +12,7 @@ resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 
 known_faces = []
 known_names = []
-data_dir = 'data/known_faces/'
+data_dir = '../data/known_faces/'
 
 # Iterate through each person in the known_faces directory
 for person_name in os.listdir(data_dir):
@@ -35,7 +35,7 @@ for person_name in os.listdir(data_dir):
 
 if known_faces:
     known_faces = np.array(known_faces)
-    save_known_faces(known_faces, known_names, 'data/known_faces.pkl')
+    save_known_faces(known_faces, known_names, '../data/known_faces.pkl')
     print("Known faces registered and saved to data/known_faces.pkl")
 else:
     print("No faces found. Please check your data directory.")
