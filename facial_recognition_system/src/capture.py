@@ -10,7 +10,7 @@ mtcnn = MTCNN(image_size=160, margin=0, device=device)
 resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 
 # Load known faces embeddings and names
-known_embeddings, known_names = load_known_faces('data/known_faces.pkl')
+known_embeddings, known_names = load_known_faces('../data/known_faces.pkl')
 
 # Open the default camera (MacBook Pro's 1080p camera)
 cap = cv2.VideoCapture(0)
