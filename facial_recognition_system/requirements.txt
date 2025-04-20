@@ -1,5 +1,10 @@
-torch
-torchvision
-facenet-pytorch
-opencv-python
-numpy
+# Core dependencies for facial recognition on PYNQ board
+numpy>=1.19.0
+opencv-python>=4.5.0
+Pillow>=8.0.0
+torch==1.13.1
+torchvision==0.14.1
+facenet-pytorch>=2.5.2
+
+# Note: torch and torchvision versions are specified to ensure compatibility with PYNQ board
+# Use --index-url https://download.pytorch.org/whl/cpu when installing torch

@@ -2,9 +2,10 @@ import cv2
 import torch
 import numpy as np
 import time
-from facenet_pytorch import MTCNN, InceptionResnetV1
 import os
 import pickle
+from PIL import Image
+from facenet_pytorch import MTCNN, InceptionResnetV1
 
 # Configuration
 MODEL_IMAGE_SIZE = 160
@@ -13,14 +14,14 @@ PROCESS_EVERY_N_FRAMES = 3  # Process every 3rd frame for better performance
 DEVICE = torch.device('cpu')  # PYNQ has no GPU
 
 # Path setup
-KNOWN_FACES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data/known_faces.pkl')
+KNOWN_FACES_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'known_faces.pkl')
 
 def load_known_faces(pickle_path):
     """Load known face embeddings and names from a pickle file."""
     if os.path.exists(pickle_path):
         with open(pickle_path, 'rb') as f:
             data = pickle.load(f)
-        return data['embeddings'], data['names']
+        return np.array(data['embeddings']), data['names']
     else:
         print(f"Warning: No known faces file at {pickle_path}")
         return np.array([]), []
@@ -28,7 +29,7 @@ def load_known_faces(pickle_path):
 def compare_faces(face_embedding, known_embeddings, known_names, threshold=RECOGNITION_THRESHOLD):
     """Compare a face embedding with known embeddings."""
     if known_embeddings.size == 0:
-        return "Unknown"
+        return "Unknown", 1.0
     
     # Compute Euclidean distances
     distances = np.linalg.norm(known_embeddings - face_embedding, axis=1)
@@ -36,9 +37,9 @@ def compare_faces(face_embedding, known_embeddings, known_names, threshold=RECOG
     min_distance = distances[min_index]
     
     if min_distance < threshold:
-        return f"{known_names[min_index]} ({min_distance:.2f})"
+        return known_names[min_index], min_distance
     else:
-        return f"Unknown ({min_distance:.2f})"
+        return "Unknown", min_distance
 
 def main():
     print("Initializing facial recognition system...")
@@ -115,7 +116,6 @@ def main():
                         face_img = rgb_frame[y1:y2, x1:x2]
                         
                         # Convert to PIL and process
-                        from PIL import Image
                         pil_img = Image.fromarray(face_img).resize((MODEL_IMAGE_SIZE, MODEL_IMAGE_SIZE))
                         
                         # Get embedding
@@ -125,12 +125,13 @@ def main():
                                 embedding = resnet(face_tensor).cpu().numpy().flatten()
                             
                             # Compare with known faces
-                            name = compare_faces(embedding, known_embeddings, known_names)
+                            name, min_dist = compare_faces(embedding, known_embeddings, known_names)
+                            display_text = f"{name} ({min_dist:.2f})"
                             
                             # Draw rectangle and name
-                            color = (0, 255, 0) if "Unknown" not in name else (0, 0, 255)
+                            color = (0, 255, 0) if name != "Unknown" else (0, 0, 255)
                             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                            cv2.putText(frame, name, (x1, y1 - 10),
+                            cv2.putText(frame, display_text, (x1, y1 - 10),
                                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
         except Exception as e:
             print(f"Error processing frame: {e}")
